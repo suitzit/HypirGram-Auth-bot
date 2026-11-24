@@ -7,6 +7,10 @@ from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import Users
 
 router = Router()
 
@@ -30,14 +34,31 @@ def generate_phone():
 
 
 @router.message(CommandStart())
-async def start(message: Message):
-    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram: +<code>{generate_phone()}</code>\n\n"
+async def start(message: Message, session: AsyncSession):
+    user_id = str(message.from_user.id)
+    phone = generate_phone()
+    result = await session.execute(
+        select(Users).where(Users.user_id == user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        user = Users(user_id=user_id, phone=phone)
+        session.add(user)
+        await session.commit()
+    else:
+        phone = user.phone
+
+    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram: +<code>{phone}</code>\n\n"
                          "<blockquote><i>❗Внимание, этот номер <b>только для HypirGram</b>\n" \
                          "В любом другом мессенджере номер <b>не будет работать!</b></i></blockquote>",
                          parse_mode=ParseMode.HTML
                          )
+    
     await asyncio.sleep(2)
+
     code = 12345
+
     await message.answer(f"💬Ваш код для входа в аккаунт: <code>{code}</code>\n"
                          "<blockquote><i>❗Данный код для входа <b>в HypirGram</b></i></blockquote>",
                          parse_mode=ParseMode.HTML

@@ -9,11 +9,11 @@ from middlewares.db_middleware import DbSessionMiddleware
 
 
 async def main():
-    
+
     bot = Bot(TOKEN)
     dp = Dispatcher()
 
-    dp.message.middleware(DbSessionMiddleware)
+    dp.message.middleware(DbSessionMiddleware())
     dp.include_router(user.router)
     
     print("Бот запущен!")
