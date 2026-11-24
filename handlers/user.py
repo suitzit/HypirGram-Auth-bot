@@ -1,4 +1,3 @@
-import asyncio
 import re
 from collections import Counter
 from random import randint
@@ -55,15 +54,6 @@ async def start(message: Message, session: AsyncSession):
                          parse_mode=ParseMode.HTML
                          )
     
-    await asyncio.sleep(2)
-
-    code = 12345
-
-    await message.answer(f"💬Ваш код для входа в аккаунт: <code>{code}</code>\n"
-                         "<blockquote><i>❗Данный код для входа <b>в HypirGram</b></i></blockquote>",
-                         parse_mode=ParseMode.HTML
-                         )
-
 @router.message(Command("help"))
 async def help(message: Message):
     await message.answer("Пока нет помощи...")
