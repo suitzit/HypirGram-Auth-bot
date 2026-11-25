@@ -1,6 +1,7 @@
 import re
 from collections import Counter
-from random import randint
+from random import randint, choice
+from pathlib import Path
 
 from aiogram import Router
 from aiogram.enums import ParseMode
@@ -22,9 +23,41 @@ def is_valid(phone: str) -> bool:
 
     return max(counts.values()) <= 4
 
+def random_file(folder: str | Path) -> Path:
+    folder = Path(folder)
+
+    if not folder.is_dir():
+        raise NotADirectoryError(f"Не папка: {folder}")
+
+    files = [p for p in folder.iterdir() if p.is_file()]
+
+    if not files:
+        raise FileNotFoundError(f"Не файл: {files}")
+
+    return choice(files)
+
+def random_code(file_path: Path) -> str | None:
+    with open(file_path, encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    if not lines:
+        return None
+    
+    return choice(lines).strip()
+
 def generate_phone():
     while True:
-        phone = str(randint(10000000000, 999999999999))
+        f = random_file("handlers/area_code")
+        code = random_code(f)
+
+        if f.stem == "code_with_nine_digits":
+            number = randint(100000000, 999999999)
+        elif f.stem == "code_with_ten_digits":
+            number = randint(1000000000, 9999999999)
+        else:
+            continue
+
+        phone = f"+{code} {number}"
 
         if not is_valid(phone):
             continue
@@ -48,7 +81,7 @@ async def start(message: Message, session: AsyncSession):
     else:
         phone = user.phone
 
-    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram: +<code>{phone}</code>\n\n"
+    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram:\n\n <code>{phone}</code>\n\n"
                          "<blockquote><i>❗Внимание, этот номер <b>только для HypirGram</b>\n" \
                          "В любом другом мессенджере номер <b>не будет работать!</b></i></blockquote>",
                          parse_mode=ParseMode.HTML

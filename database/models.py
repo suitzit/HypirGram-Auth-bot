@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float
+from sqlalchemy import Float, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
