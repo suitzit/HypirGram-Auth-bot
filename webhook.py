@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import json
@@ -225,6 +226,16 @@ async def otp_delivery(request):
                     {"error": "delivery_in_progress"},
                     status=409
                 )
+    async def delete_message_after(bot: Bot, chat_id: int, message_id: int):
+        await asyncio.sleep(300)  # 5 минут
+
+        try:
+            await bot.delete_message(
+                chat_id=chat_id,
+                message_id=message_id
+            )
+        except TelegramAPIError:
+            logger.exception("Failed to delete OTP message")
 
     # Ищем Telegram-пользователя по номеру.
     async with SessionLocal() as session:
@@ -256,7 +267,7 @@ async def otp_delivery(request):
     try:
         chat_id = int(user.user_id)
 
-        await request.app["bot"].send_message(
+        sent_message = await request.app["bot"].send_message(
             chat_id=chat_id,
             text=(
                 "💬 Ваш код авторизации HypirGram:\n\n"
@@ -265,6 +276,14 @@ async def otp_delivery(request):
             ),
             parse_mode="HTML"
         )
+
+        asyncio.create_task(
+            delete_message_after(
+                request.app["bot"],
+                chat_id,
+                sent_message.message_id
+            )
+)
 
     except (ValueError, TelegramAPIError):
         logger.exception("Telegram OTP delivery failed")
