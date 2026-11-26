@@ -57,7 +57,7 @@ def generate_phone():
         else:
             continue
 
-        phone = f"+{code} {number}"
+        phone = f"{code}{number}"
 
         if not is_valid(phone):
             continue
@@ -81,7 +81,7 @@ async def start(message: Message, session: AsyncSession):
     else:
         phone = user.phone
 
-    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram:\n\n <code>{phone}</code>\n\n"
+    await message.answer(f"📞Ваш номер телефона для регистрации в HypirGram:\n\n +<code>{phone}</code>\n\n"
                          "<blockquote><i>❗Внимание, этот номер <b>только для HypirGram</b>\n" \
                          "В любом другом мессенджере номер <b>не будет работать!</b></i></blockquote>",
                          parse_mode=ParseMode.HTML
