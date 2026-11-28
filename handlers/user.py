@@ -1,7 +1,12 @@
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import (
+    CallbackQuery, 
+    Message,
+    LabeledPrice,
+    PreCheckoutQuery
+)
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,16 +62,17 @@ async def back(callback: CallbackQuery):
 
     if destination == "main":
         await callback.message.edit_text(
-                   "✨ Твой HypirGram может больше!\n\n"
-                   "<blockquote>" \
-                   "Здесь можно заглянуть в свой профиль, открыть магазин и перейти к своим номерам.\n" \
-                   "Всё под рукой, чтобы не приходилось искать нужный раздел дольше, чем выбирать текст для ответа.\n\n" \
-                   "Хочешь узнать больше? Нажми «О боте». А если готов попробовать HypirGram — кнопка скачивания уже ждёт тебя."
-                   "</blockquote>\n\n" \
-                   "Выбирай, с чего начнем? 👇",
+            messages.WELCOME_TEXT,
             reply_markup=menu.main_menu(),
             parse_mode=ParseMode.HTML
         )
+    elif destination == "shop":
+        await callback.message.edit_text(
+            messages.SHOP_TEXT,
+            reply_markup=menu.shop(),
+            parse_mode=ParseMode.HTML
+        )
+
 
 @router.callback_query(F.data == "profile")
 async def profile(callback: CallbackQuery):
@@ -86,14 +92,7 @@ async def profile(callback: CallbackQuery):
 @router.callback_query(F.data == "shop")
 async def shop(callback: CallbackQuery):
     await callback.message.edit_text(
-        "<b>Магазин</b>\n\n" \
-        "<blockquote>"
-        "🛍 Всё нужное для твоего HypirGram — в одном месте!\n\n"
-        "Покупай Stars для подарков и любимых сервисов,\n"
-        "выбирай NFT Username для запоминающегося профиля или загляни в раздел номеров +888.\n" 
-        "А если интересуют верификации — для них тоже есть отдельная кнопка."
-        "</blockquote>\n\n"
-        "Выбирай нужный раздел ниже: пора найти что-нибудь для себя ✨",
+        messages.SHOP_TEXT,
         parse_mode=ParseMode.HTML,
         reply_markup=menu.shop()
     )
@@ -112,7 +111,85 @@ async def about_bot(callback: CallbackQuery):
 
 @router.callback_query(F.data == "pay_stars")
 async def pay_stars(callback: CallbackQuery):
-    await callback.message.edit_text("🛠️ В разработке...", reply_markup=menu.back_shop())
+    await callback.message.edit_text("Здесь вы можете приобрести HypirGram Stars ⭐\nПросто выбирете пакет и проведи оплату!", reply_markup=menu.pay_stars())
+
+@router.callback_query(F.data.startswith("stars:"))
+async def stars(callback: CallbackQuery) -> None:
+    destination = callback.data.split(":")[1]
+
+    if destination == "1000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="1000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=10)]
+        )
+    elif destination == "2000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="2000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=20)]
+        )
+    elif destination == "4000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="4000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=40)]
+        )
+    elif destination == "6000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="6000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=60)]
+        )
+    elif destination == "8000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="8000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=80)]
+        )
+    elif destination == "10000":
+        await callback.answer()
+        await callback.message.answer_invoice(
+            title="Покупка звезд:",
+            description="10000 ⭐ на баланс в HypirGram",
+            payload=f"vip:{callback.from_user.id}",
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label="XTR", amount=100)]
+        )
+    elif destination == "user":
+        await callback.answer()
+        await callback.message.answer("🛠️ В разарботке", reply_markup=menu.back_shop())
+
+
+
+@router.pre_checkout_query()
+async def pre_checkout(pre_checkout_query: PreCheckoutQuery) -> None:
+    await pre_checkout_query(ok=True)
+
+@router.message(F.successful_payment)
+async def successful_payment(message: Message) -> None:
+    await message.answer(f"Оплата прошла успешно\n<code>{message.successful_payment.telegram_payment_charge_id}</code>")
 
 @router.callback_query(F.data == "verification")
 async def verification(callback: CallbackQuery):
