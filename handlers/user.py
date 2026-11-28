@@ -1,69 +1,17 @@
-import re
-from collections import Counter
-from pathlib import Path
-from random import choice, randint
-
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Users
 from keyboards import menu
+from services.phone_generate import generate_phone
+from texts import messages
 
 router = Router()
-
-
-def is_valid(phone: str) -> bool:
-    if re.search(r"(\d)\1", phone):
-        return False
-
-    counts = Counter(phone)
-
-    return max(counts.values()) <= 4
-
-def random_file(folder: str | Path) -> Path:
-    folder = Path(folder)
-
-    if not folder.is_dir():
-        raise NotADirectoryError(f"Не папка: {folder}")
-
-    files = [p for p in folder.iterdir() if p.is_file()]
-
-    if not files:
-        raise FileNotFoundError(f"Не файл: {files}")
-
-    return choice(files)
-
-def random_code(file_path: Path) -> str | None:
-    with open(file_path, encoding="utf-8") as f:
-        lines = [line.strip() for line in f if line.strip()]
-
-    if not lines:
-        return None
-    
-    return choice(lines).strip()
-
-def generate_phone():
-    while True:
-        f = random_file("handlers/area_code")
-        code = random_code(f)
-
-        if f.stem == "code_with_nine_digits":
-            number = randint(100000000, 999999999)
-        elif f.stem == "code_with_ten_digits":
-            number = randint(1000000000, 9999999999)
-        else:
-            continue
-
-        phone = f"{code}{number}"
-
-        if not is_valid(phone):
-            continue
-
-        return phone
 
 
 @router.message(CommandStart())
@@ -76,6 +24,12 @@ async def start(message: Message, session: AsyncSession):
     )
     user = result.scalar_one_or_none()
 
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        await message.answer(messages.EASTER_EGG_TEXT, parse_mode=ParseMode.HTML)
+
     if user is None:
         user = Users(user_id=user_id, phone=phone)
         session.add(user)
@@ -87,14 +41,7 @@ async def start(message: Message, session: AsyncSession):
                             )
     else:
         phone = user.phone
-        await message.answer(
-                   "✨ Твой HypirGram может больше!\n\n"
-                   "<blockquote>" \
-                   "Здесь можно заглянуть в свой профиль, открыть магазин и перейти к своим номерам.\n" \
-                   "Всё под рукой, чтобы не приходилось искать нужный раздел дольше, чем выбирать текст для ответа.\n\n" \
-                   "Хочешь узнать больше? Нажми «О боте». А если готов попробовать HypirGram — кнопка скачивания уже ждёт тебя."
-                   "</blockquote>\n\n" \
-                   "Выбирай, с чего начнем? 👇",
+        await message.answer(messages.WELCOME_TEXT,
                    reply_markup=menu.main_menu(),
                    parse_mode=ParseMode.HTML
                )

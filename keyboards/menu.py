@@ -38,7 +38,6 @@ def shop():
                 InlineKeyboardButton(text="Купить Stars", callback_data="pay_stars", style="success"),
             ],
             [
-                InlineKeyboardButton(text="Верификации", callback_data="verification", style="success"),
                 InlineKeyboardButton(text="Приобрести NFT", callback_data="pay_nft", style="success")
             ],
             [
@@ -47,6 +46,32 @@ def shop():
             ],
             [
                 InlineKeyboardButton(text="Назад", callback_data="back:main")
+            ]
+        ]
+    )
+
+    return kb
+
+def pay_stars():
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="1000 ⭐", callback_data="stars:1000"),
+                InlineKeyboardButton(text="2000 ⭐", callback_data="stars:2000")
+            ],
+            [
+                InlineKeyboardButton(text="4000 ⭐", callback_data="stars:4000"),
+                InlineKeyboardButton(text="6000 ⭐", callback_data="stars:6000")
+            ],
+            [
+                InlineKeyboardButton(text="8000 ⭐", callback_data="stars:8000"),
+                InlineKeyboardButton(text="10000 ⭐", callback_data="stars:10000")
+            ],
+            [
+                InlineKeyboardButton(text="Введите свою сумму", callback_data="stars:user")
+            ],
+            [
+                InlineKeyboardButton(text="Назад", callback_data="back:shop")
             ]
         ]
     )
